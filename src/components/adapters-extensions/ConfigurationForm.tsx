@@ -60,8 +60,9 @@ export default function ConfigurationForm({
    * State
    */
   const [submitError, setSubmitError] = useState<Error>();
-  const [configureAdapterStatus, setConfigureAdapterStatus] =
-    useState<Web3TxStatus>(Web3TxStatus.STANDBY);
+  const [configureStatus, setConfigureStatus] = useState<Web3TxStatus>(
+    Web3TxStatus.STANDBY
+  );
   const [removeStatus, setRemoveStatus] = useState<Web3TxStatus>(
     Web3TxStatus.STANDBY
   );
@@ -94,7 +95,7 @@ export default function ConfigurationForm({
    * Variables
    */
   const {errors, formState, getValues, setValue, register, trigger} = form;
-  const configureAdapterError = submitError || txError;
+  const configureError = submitError || txError;
   const isConnected = connected && account;
   const adapterOrExtensionText = adapterOrExtension?.isExtension
     ? 'extension'
@@ -109,8 +110,9 @@ export default function ConfigurationForm({
   const isConfigureInProcess =
     (txStatus === Web3TxStatus.AWAITING_CONFIRM ||
       txStatus === Web3TxStatus.PENDING) &&
-    (configureAdapterStatus === Web3TxStatus.AWAITING_CONFIRM ||
-      configureAdapterStatus === Web3TxStatus.PENDING);
+    (configureStatus === Web3TxStatus.AWAITING_CONFIRM ||
+      configureStatus === Web3TxStatus.PENDING);
+
   const isRemoveInProcess =
     (txStatus === Web3TxStatus.AWAITING_CONFIRM ||
       txStatus === Web3TxStatus.PENDING) &&
@@ -119,7 +121,7 @@ export default function ConfigurationForm({
 
   const isConfigureDone =
     txStatus === Web3TxStatus.FULFILLED &&
-    configureAdapterStatus === Web3TxStatus.FULFILLED;
+    configureStatus === Web3TxStatus.FULFILLED;
   const isRemoveDone =
     txStatus === Web3TxStatus.FULFILLED &&
     removeStatus === Web3TxStatus.FULFILLED;
@@ -171,7 +173,6 @@ export default function ConfigurationForm({
       closeHandler &&
         setTimeout(() => {
           closeHandler();
-          // @todo Display closing modal message
         }, 3000);
     } catch (error) {
       setSubmitError(error);
@@ -185,7 +186,7 @@ export default function ConfigurationForm({
    */
   async function handleSubmit(values: Record<string, any>) {
     try {
-      setConfigureAdapterStatus(Web3TxStatus.PENDING);
+      setConfigureStatus(Web3TxStatus.PENDING);
 
       const {
         contractAddress,
@@ -230,17 +231,21 @@ export default function ConfigurationForm({
         ...(fastGasPrice ? {gasPrice: fastGasPrice} : null),
       };
 
-      setConfigureAdapterStatus(Web3TxStatus.AWAITING_CONFIRM);
+      setConfigureStatus(Web3TxStatus.AWAITING_CONFIRM);
 
       // Execute contract call
       await txSend(abiMethodName, methods, adapterConfigArguments, txArguments);
 
-      setConfigureAdapterStatus(Web3TxStatus.FULFILLED);
+      setConfigureStatus(Web3TxStatus.FULFILLED);
     } catch (error) {
       // Set any errors from Web3 utils or explicitly set above.
       setSubmitError(error);
-      setConfigureAdapterStatus(Web3TxStatus.REJECTED);
+      setConfigureStatus(Web3TxStatus.REJECTED);
     }
+  }
+
+  if (!abiConfigurationInputs || !abiConfigurationInputs.length) {
+    return <div>Configuration unavailable. ABI is missing!</div>;
   }
 
   return (
@@ -249,11 +254,17 @@ export default function ConfigurationForm({
       {abiConfigurationInputs &&
         abiConfigurationInputs.map((input: Record<string, any>) => (
           <div className="form__input-row" key={input.name}>
-            <label className="form__input-row-label">{input.name}</label>
+            <label
+              htmlFor={input.name}
+              aria-labelledby={input.name}
+              className="form__input-row-label">
+              {input.name}
+            </label>
             <div className="form__input-row-fieldwrap">
               <input
                 aria-describedby={`error-${input.name}`}
                 aria-invalid={errors[input.name] ? 'true' : 'false'}
+                id={input.name}
                 name={input.name}
                 placeholder={input.type}
                 type="text"
@@ -283,6 +294,7 @@ export default function ConfigurationForm({
       {/* SUBMIT */}
       <button
         className="button"
+        name="submit"
         disabled={isConfigureInProcessOrDone || isRemoveInProcessOrDone}
         onClick={() => {
           if (isConfigureInProcessOrDone) return;
@@ -305,11 +317,11 @@ export default function ConfigurationForm({
       </button>
 
       {/* SUBMIT ERROR */}
-      {configureAdapterError && (
+      {configureError && (
         <div className="form__submit-error-container">
           <ErrorMessageWithDetails
-            renderText="Something went wrong while submitting the adapter configuration."
-            error={configureAdapterError}
+            renderText="Something went wrong while submitting the configuration."
+            error={configureError}
           />
         </div>
       )}
@@ -322,10 +334,21 @@ export default function ConfigurationForm({
           finalized.
         </p>
         <button
+          name="remove"
           className="button--secondary"
-          disabled={isRemoveInProcessOrDone || isConfigureInProcessOrDone}
+          disabled={
+            isRemoveInProcess ||
+            isRemoveInProcessOrDone ||
+            isConfigureInProcessOrDone
+          }
           onClick={() => (isRemoveDone ? {} : handleRemove())}>
-          {isRemoveInProcess ? <Loader /> : isRemoveDone ? 'Done' : 'Remove'}
+          {isRemoveInProcess ? (
+            <Loader />
+          ) : isRemoveDone ? (
+            'Removed!'
+          ) : (
+            'Remove'
+          )}
         </button>
       </div>
     </form>

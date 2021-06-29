@@ -680,7 +680,7 @@ export default function AdapterOrExtensionManager() {
         )}
         {isUnavailable && <p>No adapters/extensions available</p>}
 
-        {/** UNUSED ADAPTERS AND EXTENSIONS TO ADD */}
+        {/** DISPLAY LIST OF UNUSED ADAPTERS AND EXTENSIONS TO ADD */}
         {isDAOExisting &&
           unRegisteredAdaptersOrExtensions &&
           unRegisteredAdaptersOrExtensions?.length > 0 &&
