@@ -74,15 +74,15 @@ Follow the instructions [here](https://github.com/openlawteam/tribute-contracts/
 
 Deployments for the development environment are handled automatically with a GitHub Action:
 
-- `GitHub Pages development deployment`: push to `main` branch -> https://tributedao.com
+- `GitHub Pages development deployment`: push to `main` branch -> https://demo.tributedao.com
 
 ## Developer notes
 
 ### Node Version
 
-If developing and running manually using `npm start`, or adding/updating/removing NPM packages, it's important to use the version of Node (listed in our `.nvmrc`). To do this, run `nvm use` inside the project root.
+If developing and running manually using `npm start`, or adding/updating NPM packages using `npm install`, it's recommended to use Node `^14.0.0` and NPM `^7.0.0` (listed in our `package.json`'s `engines` field). If using `nvm`, run `nvm use` inside the project root and the correct version of Node will be used (be aware Node 14 ships with NPM 6, so you will need to upgrade `npm` using `npm i -g npm`).
 
-[NVM](https://github.com/nvm-sh/nvm) (Node Version Manager) is an open-sourced tool which can switch between different versions of Node. For this project we currently use Node `14.x`. If you don't have NVM, [it's easy to install](https://github.com/nvm-sh/nvm#installing-and-updating). If you don't want to use NVM, just be sure you have Node 14.x.
+[NVM](https://github.com/nvm-sh/nvm) (Node Version Manager) is an open-sourced tool which can easily switch between different versions of Node. For this project we currently use Node `14.x`. If you don't have NVM, [it's easy to install](https://github.com/nvm-sh/nvm#installing-and-updating). If you don't want to use NVM, just be sure you have Node 14.x and NPM 7.x.
 
 ---
 
