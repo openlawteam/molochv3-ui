@@ -399,10 +399,10 @@ describe('useProposals unit tests', () => {
       });
 
       await waitForValueToChange(
-        () => result.current.proposals[1].daoProposalVotes
+        () => result.current.proposals[1].daoProposalVote
       );
 
-      expect(result.current.proposals[1].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[1].daoProposalVote).toMatchObject({
         OffchainVotingContract: {
           '0': '8376297',
           '1': '0xf9731Ad60BeCA05E9FB7aE8Dd4B63BFA49675b68',
@@ -479,7 +479,7 @@ describe('useProposals unit tests', () => {
           '0x4662dd46b8ca7ce0852426f20bc53b02335432089bbe3a4c510b36741d81ca52',
       });
 
-      expect(result.current.proposals[2].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[2].daoProposalVote).toMatchObject({
         VotingContract: {
           '0': '100',
           '1': '50',
@@ -858,10 +858,10 @@ describe('useProposals unit tests', () => {
       });
 
       await waitForValueToChange(
-        () => result.current.proposals[1].daoProposalVotes
+        () => result.current.proposals[1].daoProposalVote
       );
 
-      expect(result.current.proposals[1].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[1].daoProposalVote).toMatchObject({
         OffchainVotingContract: {
           '0': '8376297',
           '1': '0xf9731Ad60BeCA05E9FB7aE8Dd4B63BFA49675b68',
@@ -938,7 +938,7 @@ describe('useProposals unit tests', () => {
           '0x4662dd46b8ca7ce0852426f20bc53b02335432089bbe3a4c510b36741d81ca52',
       });
 
-      expect(result.current.proposals[2].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[2].daoProposalVote).toMatchObject({
         VotingContract: {
           '0': '100',
           '1': '50',
@@ -1281,10 +1281,10 @@ describe('useProposals unit tests', () => {
       });
 
       await waitForValueToChange(
-        () => result.current.proposals[0].daoProposalVotes
+        () => result.current.proposals[0].daoProposalVote
       );
 
-      expect(result.current.proposals[0].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[0].daoProposalVote).toMatchObject({
         OffchainVotingContract: {
           '0': '8376297',
           '1': '0xf9731Ad60BeCA05E9FB7aE8Dd4B63BFA49675b68',
@@ -1361,7 +1361,7 @@ describe('useProposals unit tests', () => {
           '0x4662dd46b8ca7ce0852426f20bc53b02335432089bbe3a4c510b36741d81ca52',
       });
 
-      expect(result.current.proposals[1].daoProposalVotes).toMatchObject({
+      expect(result.current.proposals[1].daoProposalVote).toMatchObject({
         VotingContract: {
           '0': '100',
           '1': '50',
