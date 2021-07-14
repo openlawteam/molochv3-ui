@@ -8,7 +8,8 @@ import {
   ProposalFlowStatus,
   RenderActionPropArguments,
 } from './types';
-import {ContractAdapterNames} from '../web3/types';
+import {ContractAdapterNames, ContractDAOConfigKeys} from '../web3/types';
+import {useDaoConfigurations} from '../../hooks';
 import {useProposalWithOffchainVoteStatus} from './hooks';
 import {VotingAdapterName} from '../adapters-extensions/enums';
 import ErrorMessageWithDetails from '../common/ErrorMessageWithDetails';
@@ -30,6 +31,11 @@ type ProposalWithOffchainActionsProps = {
   renderAction?: (data: RenderActionPropArguments) => React.ReactNode;
 };
 
+const configurationKeysToGet: ContractDAOConfigKeys[] = [
+  ContractDAOConfigKeys.offchainVotingVotingPeriod,
+  ContractDAOConfigKeys.offchainVotingGracePeriod,
+];
+
 export default function ProposalWithOffchainVoteActions(
   props: ProposalWithOffchainActionsProps
 ) {
@@ -40,8 +46,12 @@ export default function ProposalWithOffchainVoteActions(
    */
 
   const {
+    daoConfigurations: [offchainVotingPeriod, offchainGracePeriod],
+  } = useDaoConfigurations(configurationKeysToGet);
+
+  const {
     daoProposalVoteResult,
-    daoProposalVotes,
+    daoProposalVote,
     proposalFlowStatusError,
     status,
   } = useProposalWithOffchainVoteStatus(proposal);
@@ -60,8 +70,8 @@ export default function ProposalWithOffchainVoteActions(
    * start, as it requires any `Number` above `0`.
    */
   const gracePeriodStartMs: number =
-    daoProposalVotes && status === ProposalFlowStatus.OffchainVotingGracePeriod
-      ? Number(daoProposalVotes.gracePeriodStartingTime) * 1000 || Date.now()
+    daoProposalVote && status === ProposalFlowStatus.OffchainVotingGracePeriod
+      ? Number(daoProposalVote.gracePeriodStartingTime) * 1000 || Date.now()
       : 0;
 
   /**
@@ -74,7 +84,7 @@ export default function ProposalWithOffchainVoteActions(
       [VotingAdapterName.OffchainVotingContract]: {
         adapterName,
         daoProposalVoteResult,
-        daoProposalVotes,
+        daoProposalVote,
         gracePeriodStartMs,
         proposal,
         status,

@@ -1,6 +1,6 @@
 import {OffchainVotingAction, OffchainVotingStatus} from '../proposals/voting';
 import {ProposalData} from '../proposals/types';
-import {useVotingTimeStartEnd} from '../proposals/hooks';
+import {useTimeStartEnd} from '../../hooks';
 
 type GovernanceActionsProps = {
   proposal: ProposalData;
@@ -14,10 +14,10 @@ export function GovernanceActions(props: GovernanceActionsProps) {
    */
 
   const {
-    hasVotingTimeEnded,
-    hasVotingTimeStarted,
-    votingTimeStartEndInitReady,
-  } = useVotingTimeStartEnd(
+    hasTimeEnded: hasVotingEnded,
+    hasTimeStarted: hasVotingStarted,
+    timeStartEndInitReady,
+  } = useTimeStartEnd(
     proposal.snapshotProposal?.msg.payload.start,
     proposal.snapshotProposal?.msg.payload.end
   );
@@ -28,13 +28,13 @@ export function GovernanceActions(props: GovernanceActionsProps) {
 
   return (
     <>
-      {votingTimeStartEndInitReady && hasVotingTimeStarted && (
+      {timeStartEndInitReady && hasVotingStarted && (
         <OffchainVotingStatus proposal={proposal} />
       )}
 
-      {votingTimeStartEndInitReady &&
-        hasVotingTimeStarted &&
-        !hasVotingTimeEnded && <OffchainVotingAction proposal={proposal} />}
+      {timeStartEndInitReady && hasVotingStarted && !hasVotingEnded && (
+        <OffchainVotingAction proposal={proposal} />
+      )}
     </>
   );
 }

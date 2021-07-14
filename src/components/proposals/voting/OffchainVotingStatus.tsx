@@ -6,7 +6,8 @@ import {CycleEllipsis} from '../../feedback';
 import {getDAOConfigEntry} from '../../web3/helpers';
 import {ProposalData, VotingResult} from '../types';
 import {StoreState} from '../../../store/types';
-import {useOffchainVotingResults, useVotingTimeStartEnd} from '../hooks';
+import {useOffchainVotingResults} from '../hooks';
+import {useTimeStartEnd} from '../../../hooks';
 import {VotingStatus} from './VotingStatus';
 
 type OffchainVotingStatusProps = {
@@ -83,10 +84,10 @@ export function OffchainVotingStatus({
    */
 
   const {
-    hasVotingTimeStarted,
-    hasVotingTimeEnded,
-    votingTimeStartEndInitReady,
-  } = useVotingTimeStartEnd(
+    hasTimeStarted: hasVotingStarted,
+    hasTimeEnded: hasVotingEnded,
+    timeStartEndInitReady,
+  } = useTimeStartEnd(
     proposal.snapshotProposal?.msg.payload.start,
     proposal.snapshotProposal?.msg.payload.end
   );
@@ -115,10 +116,10 @@ export function OffchainVotingStatus({
    */
 
   useEffect(() => {
-    if (!hasVotingTimeEnded) return;
+    if (!hasVotingEnded) return;
 
     setDidVotePass(yesUnits > noUnits);
-  }, [hasVotingTimeEnded, noUnits, yesUnits]);
+  }, [hasVotingEnded, noUnits, yesUnits]);
 
   // Determine grace period end
   useEffect(() => {
@@ -138,12 +139,12 @@ export function OffchainVotingStatus({
 
   function renderStatus() {
     // On loading
-    if (!votingTimeStartEndInitReady) {
+    if (!timeStartEndInitReady) {
       return (
         <CycleEllipsis
           ariaLabel="Getting off-chain voting status"
-          intervalMs={200}
           fadeInProps={cycleEllipsisFadeInProps}
+          intervalMs={200}
         />
       );
     }
@@ -165,15 +166,11 @@ export function OffchainVotingStatus({
     >[0]
   ) {
     // Vote countdown timer
-    if (
-      votingTimeStartEndInitReady &&
-      hasVotingTimeStarted &&
-      !hasVotingTimeEnded
-    ) {
+    if (timeStartEndInitReady && hasVotingStarted && !hasVotingEnded) {
       return (
         <ProposalPeriodComponent
-          startPeriodMs={votingStartSeconds * 1000}
           endPeriodMs={votingEndSeconds * 1000}
+          startPeriodMs={votingStartSeconds * 1000}
         />
       );
     }
@@ -182,10 +179,10 @@ export function OffchainVotingStatus({
     if (countdownGracePeriodStartMs && gracePeriodEndMs) {
       return (
         <ProposalPeriodComponent
-          startPeriodMs={countdownGracePeriodStartMs}
-          endLabel={gracePeriodEndLabel}
           endedLabel={gracePeriodEndedLabel}
+          endLabel={gracePeriodEndLabel}
           endPeriodMs={countdownGracePeriodStartMs + gracePeriodEndMs}
+          startPeriodMs={countdownGracePeriodStartMs}
         />
       );
     }
@@ -197,10 +194,10 @@ export function OffchainVotingStatus({
 
   return (
     <VotingStatus
-      renderTimer={renderTimer}
-      renderStatus={renderStatus}
-      hasVotingEnded={hasVotingTimeEnded}
+      hasVotingEnded={hasVotingEnded}
       noUnits={noUnits}
+      renderStatus={renderStatus}
+      renderTimer={renderTimer}
       totalUnits={totalUnits}
       yesUnits={yesUnits}
     />

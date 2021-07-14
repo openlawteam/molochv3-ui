@@ -182,7 +182,7 @@ export function useProposals({
       prevState.map(
         (p): ProposalData => ({
           ...p,
-          daoProposalVotes: proposalsVotes.find(
+          daoProposalVote: proposalsVotes.find(
             ([id]) => normalizeString(id) === normalizeString(p.idInDAO || '')
           )?.[1],
         })
@@ -463,7 +463,7 @@ export function useProposals({
             idInDAO,
             daoProposal: p,
             // To be set later in a `useEffect` above
-            daoProposalVotes: undefined,
+            daoProposalVote: undefined,
             // To be set later in a `useEffect` above
             daoProposalVotingAdapter: undefined,
             // To be set later in a `useEffect` above

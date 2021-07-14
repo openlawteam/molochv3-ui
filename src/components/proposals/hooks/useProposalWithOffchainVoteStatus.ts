@@ -6,7 +6,7 @@ import {
   ProposalFlowStatus,
   ProposalData,
   ProposalFlag,
-  OffchainVotingAdapterVotes,
+  OffchainVotingAdapterVote,
 } from '../types';
 import {BURN_ADDRESS} from '../../../util/constants';
 import {ENVIRONMENT} from '../../../config';
@@ -14,7 +14,7 @@ import {multicall, MulticallTuple} from '../../web3/helpers';
 import {normalizeString} from '../../../util/helpers';
 import {proposalHasFlag} from '../helpers';
 import {StoreState} from '../../../store/types';
-import {useVotingTimeStartEnd} from '.';
+import {useTimeStartEnd} from '../../../hooks';
 import {useWeb3Modal} from '../../web3/hooks';
 import {VotingState} from '../voting/types';
 
@@ -22,7 +22,7 @@ import {VotingState} from '../voting/types';
 
 type UseProposalWithOffchainVoteStatusReturn = {
   daoProposal: {adapterAddress: string; flags: number} | undefined;
-  daoProposalVotes: OffchainVotingAdapterVotes | undefined;
+  daoProposalVote: OffchainVotingAdapterVote | undefined;
   /**
    * An enum name (`string`) of the DAO proposal's `VotingState` index
    */
@@ -38,19 +38,16 @@ export function useProposalWithOffchainVoteStatus(
   proposal: ProposalData,
   options?: {pollInterval?: number}
 ): UseProposalWithOffchainVoteStatusReturn {
-  const {daoProposalVotingAdapter, snapshotDraft, snapshotProposal} = proposal;
-  const {votes: snapshotVotes} = snapshotProposal || {};
-  const proposalId = snapshotDraft?.idInDAO || snapshotProposal?.idInDAO;
-  const {pollInterval = DEFAULT_POLL_INTERVAL_MS} = options || {};
-
   /**
    * Selectors
    */
 
   const {web3Instance} = useWeb3Modal();
+
   const daoRegistryAddress = useSelector(
     (s: StoreState) => s.contracts.DaoRegistryContract?.contractAddress
   );
+
   const daoRegistryABI = useSelector(
     (s: StoreState) => s.contracts.DaoRegistryContract?.abi
   );
@@ -61,8 +58,10 @@ export function useProposalWithOffchainVoteStatus(
 
   const [daoProposal, setDAOProposal] =
     useState<UseProposalWithOffchainVoteStatusReturn['daoProposal']>();
-  const [daoProposalVotes, setDAOProposalVotes] =
-    useState<UseProposalWithOffchainVoteStatusReturn['daoProposalVotes']>();
+
+  const [daoProposalVote, setDAOProposalVotes] =
+    useState<UseProposalWithOffchainVoteStatusReturn['daoProposalVote']>();
+
   const [daoProposalVoteResult, setDAOProposalVoteResult] =
     useState<
       UseProposalWithOffchainVoteStatusReturn['daoProposalVoteResult']
@@ -83,10 +82,10 @@ export function useProposalWithOffchainVoteStatus(
    */
 
   const {
-    hasVotingTimeStarted,
-    hasVotingTimeEnded,
-    votingTimeStartEndInitReady,
-  } = useVotingTimeStartEnd(
+    hasTimeStarted: hasVotingStarted,
+    hasTimeEnded: hasVotingEnded,
+    timeStartEndInitReady,
+  } = useTimeStartEnd(
     proposal.snapshotProposal?.msg.payload.start,
     proposal.snapshotProposal?.msg.payload.end
   );
@@ -95,12 +94,19 @@ export function useProposalWithOffchainVoteStatus(
    * Variables
    */
 
+  const {daoProposalVotingAdapter, snapshotDraft, snapshotProposal} = proposal;
+  const {votes: snapshotVotes} = snapshotProposal || {};
+  const proposalId = snapshotDraft?.idInDAO || snapshotProposal?.idInDAO;
+  const {pollInterval = DEFAULT_POLL_INTERVAL_MS} = options || {};
+
   const atExistsInDAO = daoProposal
     ? proposalHasFlag(ProposalFlag.EXISTS, daoProposal.flags)
     : false;
+
   const atSponsoredInDAO = daoProposal
     ? proposalHasFlag(ProposalFlag.SPONSORED, daoProposal.flags)
     : false;
+
   const atProcessedInDAO = daoProposal
     ? proposalHasFlag(ProposalFlag.PROCESSED, daoProposal.flags)
     : false;
@@ -115,9 +121,9 @@ export function useProposalWithOffchainVoteStatus(
    * @see `submitVoteResult` in tribute-contracts off-chain voting adapters
    */
   const offchainResultSubmitted: boolean =
-    daoProposalVotes !== undefined &&
-    isAddress(daoProposalVotes.reporter) &&
-    normalizeString(daoProposalVotes.reporter) !== BURN_ADDRESS;
+    daoProposalVote !== undefined &&
+    isAddress(daoProposalVote.reporter) &&
+    normalizeString(daoProposalVote.reporter) !== BURN_ADDRESS;
 
   const isInVotingGracePeriod: boolean =
     daoProposalVoteResult !== undefined &&
@@ -201,7 +207,7 @@ export function useProposalWithOffchainVoteStatus(
     return {
       daoProposal,
       daoProposalVoteResult,
-      daoProposalVotes,
+      daoProposalVote,
       proposalFlowStatusError,
       status,
     };
@@ -276,20 +282,20 @@ export function useProposalWithOffchainVoteStatus(
   }
 
   // Status: Submit
-  if (votingTimeStartEndInitReady && !hasVotingTimeStarted && !atExistsInDAO) {
+  if (timeStartEndInitReady && !hasVotingStarted && !atExistsInDAO) {
     return getReturnData(ProposalFlowStatus.Submit);
   }
 
   // Status: Sponsor
-  if (votingTimeStartEndInitReady && !hasVotingTimeStarted && atExistsInDAO) {
+  if (timeStartEndInitReady && !hasVotingStarted && atExistsInDAO) {
     return getReturnData(ProposalFlowStatus.Sponsor);
   }
 
   // Status: Off-chain Voting
   if (
-    votingTimeStartEndInitReady &&
-    hasVotingTimeStarted &&
-    !hasVotingTimeEnded &&
+    timeStartEndInitReady &&
+    hasVotingStarted &&
+    !hasVotingEnded &&
     atSponsoredInDAO
   ) {
     return getReturnData(ProposalFlowStatus.OffchainVoting);
@@ -297,8 +303,8 @@ export function useProposalWithOffchainVoteStatus(
 
   // Status: If no votes, skip `OffchainVotingSubmitResult` and set to `OffchainVotingGracePeriod` or `Process`
   if (
-    votingTimeStartEndInitReady &&
-    hasVotingTimeEnded &&
+    timeStartEndInitReady &&
+    hasVotingEnded &&
     atSponsoredInDAO &&
     !snapshotVotes?.length &&
     !offchainResultSubmitted
@@ -312,8 +318,8 @@ export function useProposalWithOffchainVoteStatus(
 
   // Status: Ready to Submit Vote Result
   if (
-    votingTimeStartEndInitReady &&
-    hasVotingTimeEnded &&
+    timeStartEndInitReady &&
+    hasVotingEnded &&
     atSponsoredInDAO &&
     !offchainResultSubmitted
   ) {
@@ -322,8 +328,8 @@ export function useProposalWithOffchainVoteStatus(
 
   // Status: Grace period
   if (
-    votingTimeStartEndInitReady &&
-    hasVotingTimeEnded &&
+    timeStartEndInitReady &&
+    hasVotingEnded &&
     atSponsoredInDAO &&
     offchainResultSubmitted &&
     isInVotingGracePeriod
@@ -334,8 +340,8 @@ export function useProposalWithOffchainVoteStatus(
   // Status: Process
   if (
     atSponsoredInDAO &&
-    votingTimeStartEndInitReady &&
-    hasVotingTimeEnded &&
+    timeStartEndInitReady &&
+    hasVotingEnded &&
     offchainResultSubmitted &&
     !isInVotingGracePeriod
   ) {
@@ -350,8 +356,8 @@ export function useProposalWithOffchainVoteStatus(
   // Fallthrough
   return {
     daoProposal,
+    daoProposalVote,
     daoProposalVoteResult,
-    daoProposalVotes,
     proposalFlowStatusError,
     status: undefined,
   };
